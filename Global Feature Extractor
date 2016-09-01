@@ -1,0 +1,66 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug 15 11:31:27 2016
+
+@author: melih
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Aug 14 20:58:15 2016
+
+@author: melih
+"""
+
+# set up Python environment: numpy for numerical routines, and matplotlib for plotting
+import numpy as np
+import sys
+caffe_root = '../'  # this file should be run from {caffe_root}/examples (otherwise change this line)
+sys.path.insert(0, caffe_root + 'python')
+import scipy.io as sio
+
+import caffe
+
+def f_e(t):
+    
+    if t==0:
+        mode = caffe.TEST
+        fn = 'feat_val'
+        ln = 'labels_val'
+        batch_size = 10
+    else:
+        mode = caffe.TRAIN
+        fn = 'feat_tr'
+        ln = 'labels_tr'
+        batch_size = 52
+    
+    ##Careful with the file locations
+    model_def = caffe_root + 'examples/indoor/bvlc_reference_caffenet2/deploy.prototxt'
+    model_weights = caffe_root + 'examples/indoor/bvlc_reference_caffenet2/bvlc_reference_caffenet.caffemodel'
+    
+    ###
+    ### To extract training feats; data mode = caffe.TRAIN, validation data = caffe.TEST
+    ###
+    
+    net = caffe.Net(model_def,      # defines the structure of the model
+                    model_weights,  # contains the trained weights
+                    mode)     # use test mode (e.g., don't perform dropout)
+    
+    
+    #%%Extract features of validation set (Fully Connected 7)
+
+        
+    feat =  net.blobs['fc7'].data[...]
+    labels = net.blobs['label'].data[...]
+        
+    #11 Batches in total in validation data; 53 batches in training
+    for i in xrange(batch_size):
+        print i
+        net.forward()
+        feat = np.r_[feat, net.blobs['fc7'].data[...]]
+        labels = np.r_[labels, net.blobs['label'].data[...]]
+    
+    np.savetxt('/home/melih/Documents/MATLAB/'+fn+'.txt', feat)
+    np.savetxt('/home/melih/Documents/MATLAB/'+ln+'.txt', labels)
+f_e(0) #Test
+f_e(1) #Train
